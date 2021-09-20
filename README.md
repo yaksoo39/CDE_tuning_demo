@@ -18,13 +18,15 @@ cde resource upload --local-path etl_job.py --name tuning-demo-files
 
 Next, we'll create and run the ```gen_table``` job to create a 3G table that will be used in our example (created Hive table: ```default.tuning_demo_input_table```):
 ```
-cde job create --application-file /app/mount/demo_table_gen.py --name gen_table --executor-cores 1 --executor-memory 8G --type spark --mount-1-resource tuning-demo-files
+cde job create --application-file /app/mount/demo_table_gen.py --name gen_table \
+    --executor-cores 1 --executor-memory 8G --type spark --mount-1-resource tuning-demo-files
 cde job run --name gen_table
 ```
 
 We can now create the ```etl_job``` application that we'll troubleshoot and tune:
 ```
-cde job create --application-file /app/mount/etl_job.py --name etl_job --executor-cores 1 --executor-memory 1G --type spark --mount-1-resource tuning-demo-files
+cde job create --application-file /app/mount/etl_job.py --name etl_job --executor-cores 1 \
+    --executor-memory 1G --type spark --mount-1-resource tuning-demo-files
 ```
 
 Next, enable the CDE Analysis option can be enabled from the Job's Configuration Edit page:
