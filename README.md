@@ -68,13 +68,12 @@ With 8GB per executor, the job should now complete successfully.  We can now ins
 Running CDE's Deep Analysis option for the job run provides another level of detail for each stage, in the form of a flame graph summarizing time spent at each level of the call stack:
 ![flame](flame.png)
 
-In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  Of the 3 stages, stage 2 also dominated the overall execution time and resources requirements.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression:
+In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  And of the 3 stages, stage 2 dominated the overall execution time and resources requirements.  So overall, stage 1 is less of a concern.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression:
 ```
 #spark.sql('''SELECT *, BUSY_FUNC(r) as r_func
 spark.sql('''SELECT *, (r*r*r) as r_func,
 ```
-This eliminates the high cost of serialization between JVM and Python contexts (which was required for our Python UDF in this case), which noticeable reduces the stage 1 execution time:
-![no_udf](no_udf.png)
+This is a best practice, as it eliminates the (potentially high cost) of serialization between JVM and Python contexts that is required to support a Python UDF of the type that we tested.
 
 
 ## Summary
