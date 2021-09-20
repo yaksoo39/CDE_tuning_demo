@@ -70,8 +70,8 @@ Running CDE's Deep Analysis option for the job run provides another level of det
 
 In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  And of the 3 stages, stage 2 dominated the overall execution time and resources requirements.  So overall, stage 1 is less of a concern.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression:
 ```
-#spark.sql('''SELECT *, BUSY_FUNC(r) as r_func
-spark.sql('''SELECT *, (r*r*r) as r_func,
+#spark.sql('''SELECT *, BUSY_FUNC(`r`) as r_func
+spark.sql('''SELECT *, POWER(`r`, 3) as r_func,
 ```
 This is a best practice, as it eliminates the (potentially high cost) of serialization between JVM and Python contexts that is required to support a Python UDF of the type that we tested.
 
