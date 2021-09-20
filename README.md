@@ -51,8 +51,10 @@ The Analysis tab consolidates Spark stage information for the job.  Understandin
 Selecting a particular stage from the high level CDE job Analysis view will show a summary graph of input and output sizes for that stage.  Using this view, it's obvious that there is skew in the sort stage of our sample application:
 ![drill_down](drill_down.png)
 
-Moving down to the memory allocation and utilization graph for the same stage's 'drill-down' view, we can also see  memory utilization likely exceeded the 1GB that we specified per executor (allocated completely to this task, since cores per executor was set to 1):
-![memory_over](memory_over.png)
+Reviewing the logs for failed tasks in this stage confirms that the 1GB executor memory configuration is not sufficient (likely made worse because of skew):
+```exit code: 137
+	 termination reason: OOMKilled
+```     
 
 #### Address the Problem
 Some options to resolve the issue of skewed data would be to use a [salt](), higher parallelism using repartition, or potentially Spark 3's [AQE](https://blog.cloudera.com/how-does-apache-spark-3-0-increase-the-performance-of-your-sql-workloads/).  For the purposes of this example, we will simply increase the executor memory from 1GB to 8GB:
