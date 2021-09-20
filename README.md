@@ -51,8 +51,12 @@ The Analysis tab consolidates Spark stage information for the job.  Understandin
 Selecting a particular stage from the high level CDE job Analysis view will show a summary graph of input and output sizes for that stage.  Using this view, it's obvious that there is skew in the sort stage of our sample application:
 ![drill_down](drill_down.png)
 
-Reviewing the logs for failed tasks in this stage confirms that the 1GB executor memory configuration is not sufficient (likely made worse because of skew):
-```exit code: 137
+Under the Spark UI tab, we can confirm that there were task failures which resulted in the eventual stage failure, due to out-of-memory (OOM) errors (likely made worse because of the skew):
+```
+ExecutorLostFailure (executor 15 exited caused by one of the running tasks) Reason: 
+The executor with id 15 exited with exit code 137.
+...
+	 exit code: 137
 	 termination reason: OOMKilled
 ```     
 
