@@ -28,7 +28,7 @@ cde job create --application-file /app/mount/etl_job.py --name etl_job --executo
 ```
 
 Next, enable the CDE Analysis option can be enabled from the Job's Configuration Edit page:
-![cde_da](cde_analysis.png)
+![cde_da](cde_da.png)
 
 Finally, run the job:
 ```
@@ -59,14 +59,21 @@ cde job update --name etl_job --executor-memory 8G
 ```
 
 ### Tuning
-With 16GB per executor, the job should now complete successfully.  We can now inspect the same graphs of memory utilization over time to quickly select an appropriate executor memory setting that will both allow the job to run reliably (with some headroom for data growth) and at the same time minimize use of unnecessary resources (translating to optimal costs to run the job).  In this case, we should be able to safely lower the executor memory setting to 6GB:
-![memory_une](memory_tune.png)
+With 8GB per executor, the job should now complete successfully.  We can now inspect the same graphs of memory utilization over time to quickly select an appropriate executor memory setting that will both allow the job to run reliably (with some headroom for data growth) and at the same time minimize use of unnecessary resources (translating to optimal costs to run the job).  In this case, we should be able to safely lower the executor memory setting to 4GB:
+![memory_tune](memory_tune.png)
 
 ### Deep Analysis
 Running CDE's Deep Analysis option for the job run provides another level of detail for each stage, in the form of a flame graph summarizing time spent at each level of the call stack:
 ![flame](flame.png)
 
-In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  Of the 3 stages, stage 2 also dominated the overall execution time and resources requirements.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression to eliminate the high cost of serialization between JVM and Python contexts (which was required for our Python UDF in this case), which noticeable reduces the stage 1 execution time:
+In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  Of the 3 stages, stage 2 also dominated the overall execution time and resources requirements.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression:
+```
+#spark.sql('''SELECT *, BUSY_FUNC(r) as r_func
+spark.sql('''SELECT *, (r*r*r) as r_func,
+```
+This eliminates the high cost of serialization between JVM and Python contexts (which was required for our Python UDF in this case), which noticeable reduces the stage 1 execution time:
+![no_udf](no_udf.png)
+
 
 ## Summary
 To summarize, CDE's Analysis features enhance the existing tools available to data engineers for troubleshooting and tuning of Spark applications:
