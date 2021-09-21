@@ -30,7 +30,7 @@ cde job create --application-file /app/mount/etl_job.py --name etl_job --executo
 ```
 
 Next, enable the CDE Analysis option can be enabled from the Job's Configuration Edit page:
-![cde_da](cde_da.png)
+![enable](enable.png)
 
 Finally, run the job:
 ```
@@ -67,10 +67,13 @@ cde job update --name etl_job --executor-memory 8G
 ```
 
 ### Tuning
-With 8GB per executor, the job should now complete successfully.  We can now inspect the same graphs of memory utilization over time to quickly select an appropriate executor memory setting that will both allow the job to run reliably (with some headroom for data growth) and at the same time minimize use of unnecessary resources (translating to optimal costs to run the job).  In this case, we should be able to safely lower the executor memory setting to 4GB:
+With 8GB per executor, the job should now complete successfully.  Run *deep analysis* for the job run by clicking the button in the Analysis tab:
+![cde_da](cde_da.png)
+
+We can now inspect the same graphs of memory utilization over time to quickly select an appropriate executor memory setting that will both allow the job to run reliably (with some headroom for data growth) and at the same time minimize use of unnecessary resources (translating to optimal costs to run the job).  In this case, we should be able to safely lower the executor memory setting to 4GB:
 ![memory_tune](memory_tune.png)
 
-### Deep Analysis
+### Callstack Flame Graph
 Running CDE's Deep Analysis option for the job run provides another level of detail for each stage, in the form of a flame graph summarizing time spent at each level of the call stack:
 ![flame](flame.png)
 
