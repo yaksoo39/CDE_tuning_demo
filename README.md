@@ -29,7 +29,7 @@ cde job create --application-file /app/mount/etl_job.py --name etl_job --executo
     --executor-memory 1G --type spark --mount-1-resource tuning-demo-files
 ```
 
-Next, enable the CDE Analysis option can be enabled from the Job's Configuration Edit page:
+Next, enable the CDE Spark Analysis option from the Job's Configuration Edit page:
 ![enable](enable.png)
 
 Finally, run the job:
