@@ -30,7 +30,7 @@ cde job create --application-file /app/mount/etl_job.py --name etl_job --executo
 ```
 
 Next, enable the CDE Analysis option can be enabled from the Job's Configuration Edit page:
-
+![enable](enable.png)
 
 Finally, run the job:
 ```
