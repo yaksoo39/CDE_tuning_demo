@@ -44,8 +44,10 @@ Some common approaches to identify the root cause of the job failure would be to
 
 
 ### Stage View
-The Analysis tab consolidates Spark stage information for the job.  Understanding the dependencies, order, and component of the overall execution time between these stages from the Spark Histort and logs can be non-trivial.  The CDE Analysisview makes it immediately obvious which stages took the longest or were dependencies of others, potentially highligting bottlenecks.  The color coding also summarizes the component of time spend waiting for resources versus executing, per stage:
+The Analysis tab consolidates Spark stage information for the job.  Understanding the dependencies, order, and component of the overall execution time between these stages from the Spark Histort and logs can be non-trivial.  The CDE Analysis view makes it immediately obvious which stages took the longest or were dependencies of others, potentially highligting bottlenecks.  The color coding also summarizes the component of time spend waiting for resources versus executing, per stage, which can help developers decide on the correct balance of 'warm' resource available and auto-scaling limits to align with expected responsiveness required to meet SLAs:
 ![stage_dag](stage_dag.png)
+
+The scheduler graph summarizes how quickly stage tasks are processed, which is also related to how quickly and to what extend resources are auto-scaled.  This also can be a useful tool when deciding how to configure the CDE service-level on-demand and spot instance limits (min/max), as well as Virtual cluster max limits.
 
 ### Stage Drill-Down
 Selecting a particular stage from the high level CDE job Analysis view will show a summary graph of input and output sizes for that stage.  Using this view, it's obvious that there is skew in the sort stage of our sample application:
@@ -60,6 +62,9 @@ The executor with id 15 exited with exit code 137.
 	 termination reason: OOMKilled
 ```     
 
+Garbage collection spikes can also be a good indicator of memory contention in the job, as the JVM struggles to handle allocation requests (although for this job run, GC stayed close to 0%, see the green line).
+
+
 #### Address the Problem
 Some options to resolve the issue of skewed data would be to use a [salt](), higher parallelism using repartition, or potentially Spark 3's [AQE](https://blog.cloudera.com/how-does-apache-spark-3-0-increase-the-performance-of-your-sql-workloads/).  For the purposes of this example, we will simply increase the executor memory from 1GB to 8GB:
 ```
@@ -73,11 +78,13 @@ With 8GB per executor, the job should now complete successfully.  Run *deep anal
 We can now inspect the same graphs of memory utilization over time to quickly select an appropriate executor memory setting that will both allow the job to run reliably (with some headroom for data growth) and at the same time minimize use of unnecessary resources (translating to optimal costs to run the job).  In this case, we should be able to safely lower the executor memory setting to 4GB:
 ![memory_tune](memory_tune.png)
 
+This is a very useful aspect of CDE's Deep Analysis, since it is difficult from the Spark History UI and logs alone to understand how memory a job may have overallocated (which translates to unecessary job queing on-prem, or overspending on resources in an auto-scaling environment such as CDE).
+
 ### Callstack Flame Graph
 Running CDE's Deep Analysis option for the job run provides another level of detail for each stage, in the form of a flame graph summarizing time spent at each level of the call stack:
 ![flame](flame.png)
 
-Note that the flame graph will only be available if the job execution time (not including scheduling, overhead, etc) exceeds a threshold of 1 minute.
+The flame graph can be especially useful to confirm if parts of the Spark user's custom code (for example, map, filter, UDF functions, etc) are a bottleneck - this is something that is not easily understood from the standard Spark History UI.  On the other hand, a flame graph for pure SparkSQL job (with no custom code implemented by the user) will likely show only internal Spark function calls that may not be as useful for tuning and troubleshooting.  Note that the flame graph will only be available if the job execution time (not including scheduling, overhead, etc) exceeds a threshold of 1 minute.  The sample rate used to collect the call stack data is 10 seconds, so the graph is typically more useful for longer running jobs. 
 
 In our case, the time spent within a Python context (the BUSY_FUNC UDF function defined in the code) is a small fraction of the stage 1 execution time.  And of the 3 stages, stage 2 dominated the overall execution time and resources requirements.  So overall, stage 1 is less of a concern.  Still, we could replace the UDF function with an equivalent SparkSQL-only expression:
 ```
