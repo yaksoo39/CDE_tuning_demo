@@ -52,7 +52,7 @@ The scheduler graph also summarizes how quickly stage tasks are processed, which
 
 ### Stage Drill-Down
 Selecting a particular stage from the high level CDE job Analysis view will show a summary graph of input and output sizes for that stage.  Using this view, it's obvious that there is skew in the input data that we're sorting:
-![drill_down](drill_down.png)
+![drill_down](drilldown.png)
 
 Under the Spark UI tab, we can confirm that there were task failures which resulted in the eventual stage failure, due to out-of-memory (OOM) errors (likely made worse because of the skew):
 ```
